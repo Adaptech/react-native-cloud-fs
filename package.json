@@ -10,5 +10,10 @@
     "react-native"
   ],
   "author": "",
-  "license": ""
+  "license": "",
+  "dependencies": {
+    "@react-native-google-signin/google-signin": "^6.0.0",
+    "react-native-fs": "^2.16.6",
+    "react-native-google-drive-api-wrapper": "^1.4.0"
+  }
 }
