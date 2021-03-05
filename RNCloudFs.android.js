@@ -56,8 +56,13 @@ export default class RNCloudFs {
     await RNCloudFs._ensureInitialized();
     const req = {
       spaces: scope === 'hidden' ? 'appDataFolder' : 'drive',
-      fields: 'nextPageToken, files(id, name, size, modifiedTime, mimeType, webContentLink)'
+      fields: 'nextPageToken, files(id, name, size, modifiedTime, mimeType, webContentLink)',
     };
+    if (targetPath) {
+      const parts = targetPath.split('/');
+      const parents = await getParents(parts, scope);
+      req.q = "'" + parents[0] + "' in parents";
+    }
     //TODO handle pagination
     const result = await (await GDrive.files.list(req)).json();
     const files = result.files.map(({name, size, modifiedTime, mimeType, webContentLink}) => {
