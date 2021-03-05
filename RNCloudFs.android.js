@@ -70,7 +70,7 @@ export default class RNCloudFs {
       const isFile = !isDirectory;
       return new File(name, null, webContentLink, modifiedTime, size, isFile, isDirectory);
     });
-    return new FileList(targetPath, files);
+    return new FileList(targetPath, files || []);
   }
 
   static _ensureInitialized() {
