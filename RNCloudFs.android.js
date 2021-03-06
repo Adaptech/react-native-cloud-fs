@@ -8,10 +8,10 @@ async function getParents(parts, scope, parentId) {
     const req = {
       spaces: scope === 'hidden' ? 'appDataFolder' : 'drive',
       fields: 'nextPageToken, files(id, name)',
-      q: "mimeType='application/vnd.google-apps.folder' name='" + parts[0] + "'",
+      q: "mimeType = 'application/vnd.google-apps.folder' and name = '" + parts[0] + "'",
     };
-    if (parentId) req.q += " '" + parentId + "' in parents";
-    else if (scope === 'hidden') req.q += " 'appDataFolder' in parents";
+    if (parentId) req.q += " and '" + parentId + "' in parents";
+    else if (scope === 'hidden') req.q += " and 'appDataFolder' in parents";
     const res = await (await GDrive.files.list(req)).json();
     if (!res.files.length) {
       //TODO create it not found
@@ -47,8 +47,8 @@ export default class RNCloudFs {
       parents: await getParents(parts.slice(0, parts.length - 1), scope)
     }
 
-    const data = await RNFS.readFile(sourcePath.path);
-    const res = await (await GDrive.files.createFileMultipart(data, mimeType, metadata, false)).json();
+    const data = await RNFS.readFile(sourcePath.path, 'base64');
+    const res = await (await GDrive.files.createFileMultipart(data, mimeType, metadata, true)).json();
     return res.webContentLink;
   }
 
@@ -56,7 +56,7 @@ export default class RNCloudFs {
     await RNCloudFs._ensureInitialized();
     const req = {
       spaces: scope === 'hidden' ? 'appDataFolder' : 'drive',
-      fields: 'nextPageToken, files(id, name, size, modifiedTime, mimeType, webContentLink)',
+      fields: 'nextPageToken, files(id, name, size, modifiedTime, mimeType)',
     };
     if (targetPath) {
       const parts = targetPath.split('/');
@@ -65,17 +65,22 @@ export default class RNCloudFs {
     }
     //TODO handle pagination
     const result = await (await GDrive.files.list(req)).json();
-    const files = result.files.map(({name, size, modifiedTime, mimeType, webContentLink}) => {
+    const files = result.files.map(({id, name, size, modifiedTime, mimeType}) => {
       const isDirectory = mimeType === 'application/vnd.google-apps.folder';
       const isFile = !isDirectory;
-      return new File(name, null, webContentLink, modifiedTime, size, isFile, isDirectory);
+      const uri = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`
+      return new File(name, null, uri, modifiedTime, size, isFile, isDirectory);
     });
     return new FileList(targetPath, files || []);
   }
 
+  static get accessToken() {
+    return RNCloudFs._accessToken;
+  }
+
   static _ensureInitialized() {
     if (RNCloudFs._initialized || RNCloudFs._initializing) {
-      return this._initializing;
+      return RNCloudFs._initializing;
     }
     RNCloudFs._initializing = RNCloudFs._initialize();
     return RNCloudFs._initializing;
@@ -90,6 +95,7 @@ export default class RNCloudFs {
     const { accessToken } = await GoogleSignin.getTokens();
     GDrive.init();
     GDrive.setAccessToken(accessToken);
-    this._initialized = true;
+    RNCloudFs._accessToken = accessToken;
+    RNCloudFs._initialized = true;
   }
 }

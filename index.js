@@ -38,6 +38,10 @@ class RNCloudFsWrapper {
   static listFiles({targetPath, scope}) {
     return RNCloudFs.listFiles({targetPath, scope});
   }
+
+  static get accessToken() {
+    return RNCloudFs.accessToken;
+  }
 }
 
 export default RNCloudFsWrapper;
