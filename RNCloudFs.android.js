@@ -87,15 +87,19 @@ export default class RNCloudFs {
   }
 
   static async _initialize() {
-    GoogleSignin.configure({
-      scopes: ['https://www.googleapis.com/auth/drive.appdata']
-    });
-    await GoogleSignin.hasPlayServices();
-    await GoogleSignin.signIn();
-    const { accessToken } = await GoogleSignin.getTokens();
-    GDrive.init();
-    GDrive.setAccessToken(accessToken);
-    RNCloudFs._accessToken = accessToken;
-    RNCloudFs._initialized = true;
+    try {
+      GoogleSignin.configure({
+        scopes: ['https://www.googleapis.com/auth/drive.appdata']
+      });
+      await GoogleSignin.hasPlayServices();
+      await GoogleSignin.signIn();
+      const { accessToken } = await GoogleSignin.getTokens();
+      GDrive.init();
+      GDrive.setAccessToken(accessToken);
+      RNCloudFs._accessToken = accessToken;
+      RNCloudFs._initialized = true;
+    } finally {
+      RNCloudFs._initializing = null;
+    }
   }
 }
